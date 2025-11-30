@@ -12,11 +12,12 @@ ShaguPlates:RegisterModule("nameplates", "vanilla:tbc", function ()
 
   local combatstate = {
     -- gets overwritten by user config
-    ["NOTHREAT"] = { r = .7, g = .7, b = .2, a = 1 },
-    ["THREAT"]   = { r = .7, g = .2, b = .2, a = 1 },
-    ["CASTING"]  = { r = .7, g = .2, b = .7, a = 1 },
-    ["STUN"]     = { r = .2, g = .7, b = .7, a = 1 },
-    ["NONE"]     = { r = .2, g = .2, b = .2, a = 1 },
+    ["NOTHREAT"] =        { r = .7, g = .7, b = .2, a = 1 },
+    ["THREAT"]   =        { r = .7, g = .2, b = .2, a = 1 },
+    ["THREATWATCHLIST"] = { r = .7, g = .5, b = .2, a = 1 },
+    ["CASTING"]  =        { r = .7, g = .2, b = .7, a = 1 },
+    ["STUN"]     =        { r = .2, g = .7, b = .7, a = 1 },
+    ["NONE"]     =        { r = .2, g = .2, b = .2, a = 1 },
   }
 
   local elitestrings = {
@@ -37,6 +38,29 @@ ShaguPlates:RegisterModule("nameplates", "vanilla:tbc", function ()
   -- cache default border color
   local er, eg, eb, ea = GetStringColor(ShaguPlates_config.appearance.border.color)
 
+  -- combat watchlist
+  local watchlist
+  local function CombatWatchlistPopulate()
+    -- initialize variables
+    watchlist = {}
+    local list = C.nameplates.combatwatchlist
+
+    -- populate list
+    for _, val in pairs({strsplit("#", list)}) do
+      watchlist[strlower(val)] = true
+    end
+  end
+
+  local function UnitIsOnWatchlist(unit)
+    if not watchlist then CombatWatchlistPopulate() end
+
+    local unitname = UnitName(unit)
+
+    if unitname == nil then return false end
+
+    return watchlist[strlower(unitname)] == true
+  end
+
   local function GetCombatStateColor(guid)
     local target = guid.."target"
     local color = false
@@ -46,6 +70,8 @@ ShaguPlates:RegisterModule("nameplates", "vanilla:tbc", function ()
         color = combatstate.CASTING
       elseif C.nameplates.ccombatthreat == "1" and UnitIsUnit(target, "player") then
         color = combatstate.THREAT
+      elseif C.nameplates.ccombatthreatwatchlist == "1" and UnitIsOnWatchlist(target) then
+        color = combatstate.THREATWATCHLIST
       elseif C.nameplates.ccombatnothreat == "1" and UnitExists(target) then
         color = combatstate.NOTHREAT
       elseif C.nameplates.ccombatstun == "1" and not UnitExists(target) and not UnitIsPlayer(guid) then
@@ -512,6 +538,7 @@ ShaguPlates:RegisterModule("nameplates", "vanilla:tbc", function ()
     local c = combatstate -- load combat state colors
     c.CASTING.r, c.CASTING.g, c.CASTING.b, c.CASTING.a = GetStringColor(C.nameplates.combatcasting)
     c.THREAT.r, c.THREAT.g, c.THREAT.b, c.THREAT.a = GetStringColor(C.nameplates.combatthreat)
+    c.THREATWATCHLIST.r, c.THREATWATCHLIST.g, c.THREATWATCHLIST.b, c.THREATWATCHLIST.a = GetStringColor(C.nameplates.combatthreatwatchlist)
     c.NOTHREAT.r, c.NOTHREAT.g, c.NOTHREAT.b, c.NOTHREAT.a = GetStringColor(C.nameplates.combatnothreat)
     c.STUN.r, c.STUN.g, c.STUN.b, c.STUN.a = GetStringColor(C.nameplates.combatstun)
 
@@ -1087,6 +1114,9 @@ ShaguPlates:RegisterModule("nameplates", "vanilla:tbc", function ()
   nameplates.UpdateConfig = function()
     -- update debuff filters
     DebuffFilterPopulate()
+
+    -- update combat watchlist
+    CombatWatchlistPopulate()
 
     -- update nameplate visibility
     nameplates:SetGameVariables()
