@@ -275,6 +275,9 @@ ShaguPlates:RegisterModule("superwow", "vanilla", function ()
       supercast.init = true
     end
 
+    -- write state variable
+    superwow_active = true
+
     if arg3 == "START" or arg3 == "CAST" or arg3 == "CHANNEL" then
       -- human readable argument list
       local guid = arg1
@@ -312,9 +315,6 @@ ShaguPlates:RegisterModule("superwow", "vanilla", function ()
       libcast.db[guid].casttime = timer
       libcast.db[guid].icon = icon
       libcast.db[guid].channel = event_type == "CHANNEL" or false
-
-      -- write state variable
-      superwow_active = true
     elseif arg3 == "FAIL" then
       local guid = arg1
 
